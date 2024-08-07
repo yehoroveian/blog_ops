@@ -1,2 +1,2 @@
-# blog_ops
-This repository contains Ops functionality of my Blog.
+# blog_lambdas
+This repository contains lambda functions for my blog.
