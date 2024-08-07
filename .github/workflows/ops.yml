@@ -32,7 +32,7 @@ jobs:
         run: aws ecr get-login-password --region ${{ vars.AWS_DEFAULT_REGION }} | docker login --username AWS --password-stdin ${{ vars.ECR_URI }}
 
       - name: Build OPS CI/CD Deploy Lambda Image
-        run: docker build --platform linux/arm64 --target deploy-lambda -t deploy:0.0.1 . |
+        run: docker build --platform linux/arm64 --target deploy-lambda -t deploy:0.0.1 .
 
       - name: Tag OPS CI/CD Image
         run: docker tag deploy:0.0.1 ${{ vars.ECR_URI }}/$ECR_REPO_DEPLOY:latest
