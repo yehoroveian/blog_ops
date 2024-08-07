@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
-	l "github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 
 	"gitlab.com/blog/ops/pkg/log"
@@ -39,7 +39,7 @@ func (s *Service) HandleDeployECRChanges(ctx context.Context, event events.Event
 	}
 
 	if lambdaName != "" {
-		_, err = s.cl.UpdateFunctionCode(ctx, &l.UpdateFunctionCodeInput{
+		_, err = s.cl.UpdateFunctionCode(ctx, &lambda.UpdateFunctionCodeInput{
 			FunctionName: &lambdaName,
 			ImageUri:     &imageURI,
 			Publish:      true,
@@ -53,7 +53,7 @@ func (s *Service) HandleDeployECRChanges(ctx context.Context, event events.Event
 
 	lambdaName = convertECRImageNameToLambdaName(detail.RepositoryName)
 
-	_, err = s.cl.CreateFunction(ctx, &l.CreateFunctionInput{
+	_, err = s.cl.CreateFunction(ctx, &lambda.CreateFunctionInput{
 		PackageType:   types.PackageTypeImage,
 		Code:          &types.FunctionCode{ImageUri: &imageURI},
 		FunctionName:  &lambdaName,

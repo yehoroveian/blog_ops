@@ -1,4 +1,4 @@
-package namespaces
+package ecr
 
 import (
 	"context"

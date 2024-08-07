@@ -1,0 +1,41 @@
+name: Ops Job
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ECR_REPO_DEPLOY: deploy
+
+jobs:
+  build_deploy_ops:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Authenticate to AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ vars.AWS_STS_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+
+      - name: GetCallerIdentity (STS)
+        run: |
+          aws sts get-caller-identity
+
+      - name: Login to Amazon ECR
+        run: aws ecr get-login-password --region ${{ vars.AWS_DEFAULT_REGION }} | docker login --username AWS --password-stdin ${{ vars.ECR_URI }}
+
+      - name: Build OPS CI/CD Deploy Lambda Image
+        run: docker build --platform linux/arm64 --target deploy-lambda -t deploy:0.0.1 . |
+
+      - name: Tag OPS CI/CD Image
+        run: docker tag deploy:0.0.1 ${{ vars.ECR_URI }}/$ECR_REPO_DEPLOY:latest
+
+      - name: Push OPS CI/CD Deploy Lambda Image to ECR
+        run: docker push ${{ vars.ECR_URI }}/$ECR_REPO_DEPLOY

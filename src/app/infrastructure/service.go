@@ -3,10 +3,10 @@ package infrastructure
 import (
 	"context"
 
-	"github.com/aws/aws-lambda-go/events"
-	l "github.com/aws/aws-sdk-go-v2/service/lambda"
+	"gitlab.com/blog/ops/src/storage/dynamo/ecr"
 
-	"gitlab.com/blog/ops/src/storage/dynamo/namespaces"
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go-v2/service/lambda"
 )
 
 type Provider interface {
@@ -20,14 +20,14 @@ type Service struct {
 	secretRegion     string
 	lambdaRunnerRole string
 
-	cl *l.Client
-	db namespaces.Repository
+	cl *lambda.Client
+	db ecr.Repository
 }
 
 // Interface compliance check.
 var _ Provider = (*Service)(nil)
 
-func New(imageURI, imageTag, secretName, secretRegion, lambdaRunnerRole string, awsClient *l.Client, db namespaces.Repository) *Service {
+func New(imageURI, imageTag, secretName, secretRegion, lambdaRunnerRole string, awsClient *lambda.Client, db ecr.Repository) *Service {
 	return &Service{
 		imageURI:         imageURI,
 		imageTag:         imageTag,

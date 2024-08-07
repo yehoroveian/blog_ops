@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"log"
 
+	"gitlab.com/blog/ops/src/storage/dynamo/ecr"
+
 	"github.com/aws/aws-lambda-go/lambda"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	l "github.com/aws/aws-sdk-go-v2/service/lambda"
 
 	"gitlab.com/blog/ops/src/app/infrastructure"
 	"gitlab.com/blog/ops/src/config"
-	"gitlab.com/blog/ops/src/storage/dynamo/namespaces"
 )
 
 func main() {
@@ -36,7 +38,7 @@ func run() error {
 	}
 
 	awsClient := l.NewFromConfig(awsConfig)
-	dynamoClient := namespaces.New(dynamodb.NewFromConfig(awsConfig))
+	dynamoClient := ecr.New(dynamodb.NewFromConfig(awsConfig))
 
 	svc := infrastructure.New(cfg.ECR.URI, cfg.ECR.User, cfg.Secret.SecretName, cfg.Secret.SecretRegion, cfg.Lambda.LambdaRunnerRole, awsClient, dynamoClient)
 
