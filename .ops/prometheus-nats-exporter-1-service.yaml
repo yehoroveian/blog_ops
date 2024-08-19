@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.34.0 (HEAD)
+  labels:
+    io.kompose.service: prometheus-nats-exporter-1
+  name: prometheus-nats-exporter-1
+spec:
+  ports:
+    - name: "7778"
+      port: 7778
+      targetPort: 7777
+  selector:
+    io.kompose.service: prometheus-nats-exporter-1

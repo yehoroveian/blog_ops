@@ -1,0 +1,128 @@
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/datasources
+  jaeger:
+    image: jaegertracing/all-in-one:${JAEGER_VERSION:-latest}
+    ports:
+      - 16686:16686
+      - 14268:14268
+    environment:
+      - LOG_LEVEL=debug
+
+  nats:
+    image: nats
+    ports:
+      - "8222:8222"
+      - "4222:4222"
+      - "6222:6222"
+    command: "--cluster_name NATS --server_name=S1-NATS --cluster nats://0.0.0.0:6222 --routes=nats://ruser:T0pS3cr3t@nats-1:6222,nats://ruser:T0pS3cr3t@nats-2:6222 --m 8222 --js --sd=/data"
+
+  nats-1:
+    image: nats
+    ports:
+      - "8223:8222"
+      - "4223:4222"
+    command: "--cluster_name NATS --server_name=S2-NATS --cluster nats://0.0.0.0:6222 --routes=nats://ruser:T0pS3cr3t@nats:6222,nats://ruser:T0pS3cr3t@nats-2:6222 --m 8222 --js --sd=/data"
+
+  nats-2:
+    image: nats
+    ports:
+      - "8224:8222"
+      - "4225:4222"
+    command: "--cluster_name NATS --server_name=S3-NATS --cluster nats://0.0.0.0:6222 --routes=nats://ruser:T0pS3cr3t@nats:6222,nats://ruser:T0pS3cr3t@nats-1:6222 --m 8222"
+
+  prometheus-nats-exporter:
+    image: natsio/prometheus-nats-exporter
+    hostname: prometheus-nats-exporter
+    command: "-connz -varz -healthz -D -jsz=all http://host.docker.internal:8222"
+    ports:
+      - "7777:7777"
+
+  prometheus-nats-exporter-1:
+    image: natsio/prometheus-nats-exporter
+    hostname: prometheus-nats-exporter
+    command: "-connz -varz -healthz -D -jsz=all http://host.docker.internal:8223"
+    ports:
+      - "7778:7777"
+
+  prometheus-nats-exporter-2:
+    image: natsio/prometheus-nats-exporter
+    hostname: prometheus-nats-exporter
+    command: "-connz -varz -healthz -D -jsz=all http://host.docker.internal:8224"
+    ports:
+      - "7779:7777"
+
+  postgres:
+    container_name: postgres_container
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    ports:
+      - 9187:9187
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:admin@postgres:5432/users?sslmode=disable"
+    links:
+      - postgres
+      - prometheus
+
+  redis:
+    image: docker.io/bitnami/redis:7.4
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+    ports:
+      - '6379:6379'
+    volumes:
+      - 'redis_data:/bitnami/redis/data'
+
+  redis-exporter:
+    image: oliver006/redis_exporter
+    ports:
+      - 9121:9121
+    environment:
+      REDIS_ADDR: "redis:6379"
+    links:
+      - redis
+      - prometheus
+
+volumes:
+  prom_data:
+  postgres:
+  nats1:
+    external: true
+  nats2:
+    external: true
+  nats3:
+    external: true
+  redis_data:
+    driver: local
